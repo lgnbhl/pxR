@@ -13,10 +13,33 @@
 #    20141222. fvf:  bug in "wide" direction
 #################################################################
 
-as.data.frame.px <- function( x, ..., use.codes = FALSE, warnings.as.errors = TRUE, direction = "long"){
+as.data.frame.px <- function( x, ..., use.codes = FALSE, warnings.as.errors = TRUE, direction = "long", language=FALSE){
 
   dat <- x$DATA$value  # already a data frame
   
+  if ((!is.logical(language) && is.character(language))){
+    if(language %in% x$LANGUAGES$value){
+      use.language = paste0('.',language,'.')
+      default.language = x$LANGUAGE
+      codes.ids = match(names(x$CODES), colnames(dat))
+
+      for(code_id in codes.ids)
+        dat[[codes.ids[code_id]]] <- mapvalues(dat[[codes.ids[code_id]]], 
+                                     from = x$VALUES[[code_id]], 
+                                     to   = x[[paste0('VALUES', use.language)]][[code_id]])
+      translated_colnames = names(x[[paste0('CODES', use.language)]])[codes.ids]
+      translated_colnames = c(translated_colnames, 'value')
+      colnames(dat) = translated_colnames
+    
+    } else {
+      stop(paste0('Can\'t find the proposed language. Please choose one of the available languages: ', x$LANGUAGES$value))
+    }
+  } else {
+    language = ''
+  }
+
+
+
   ## maybe we need to change values to codes
   if (is.logical(use.codes) && use.codes)
     use.codes <- names(x$CODES)
@@ -26,6 +49,7 @@ as.data.frame.px <- function( x, ..., use.codes = FALSE, warnings.as.errors = TR
         dat[[var.name]] <- mapvalues(dat[[var.name]], 
                                      from = x$VALUES[[var.name]], 
                                      to   = x$CODES[[var.name]])
+
      
   ## do we need to reshape?
   if (direction == "wide")

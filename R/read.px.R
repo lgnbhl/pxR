@@ -123,12 +123,24 @@ read.px <- function(filename, encoding = NULL,
     ## we need to split them (and clean the mess: extra spaces, etc.)
     px$STUB$value    <- if(!is.null(px$STUB))    make.names(break.clean(px$STUB$value))
     px$HEADING$value <- if(!is.null(px$HEADING)) make.names(break.clean(px$HEADING$value))
-
+    px$LANGUAGES$value <- if(!is.null(px$LANGUAGES)) make.names(break.clean(px$LANGUAGES$value))
+    if ('LANGUAGES' %in% names(px)){
+      
+      if (length(px$LANGUAGES$values)!=1){
+        for (id in grep('VALUES', names(px))){
+          px[[id]] <- lapply(px[[id]], break.clean)     
+        }
+       for (id in grep('CODES', names(px))){
+          px[[id]] <- lapply(px[[id]], break.clean)     
+        }
+    } else{
     px$VALUES <- lapply(px$VALUES, break.clean)
+    if (!is.null(px$CODES))
+       px$CODES <- lapply(px$CODES, break.clean)      
+    }
+  }
 
     # fvf.20141222: if there are not CODES, do not create CODES
-    if (!is.null(px$CODES))
-       px$CODES <- lapply(px$CODES, break.clean)
 
     # fvf.20141222: Sustituye ["~~~~" "~~~~~"] por ["~~~~~"\n"~~~~"]  en 
     # campos multilinea con retornos perdidos (simplifica la lectura humana)
@@ -170,7 +182,7 @@ read.px <- function(filename, encoding = NULL,
       #                                     to   = px$VALUES[[col.name]])
       # fvf.20141222:
       for (col.name in colnames(keys.part)){
-        if (px$KEYS[[col.name]] == 'CODES')   {            
+        if (grepl(pattern = 'CODES', x = px$KEYS[[col.name]]))   {            
           keys.part[[col.name]]  <- factor(keys.part[[col.name]], levels = px$CODES[[col.name]]) 
           levels(keys.part[[col.name]]) <- px$VALUES[[col.name]]  ## all levels a VALUES
         } else  keys.part[[col.name]]  <- factor(keys.part[[col.name]], levels = px$VALUES[[col.name]] )           
